@@ -1,0 +1,48 @@
+include         system.in.init
+read_data       system.data
+include         system.in.settings
+replicate  2 2 2
+minimize    1.0e-4 1.0e-6 100 1000
+
+velocity    all create 303.15 87287 loop geom
+
+thermo_style  custom step temp pe etotal vol
+
+thermo        1000
+    group DMSO type  7
+    group PF6 type  39
+    group LiION type  38
+    group Ions type 38 39
+
+timestep 1
+
+fix fxnvt all nvt temp 303.15 303.15 100
+
+compute msdLiION LiION  msd com yes
+variable        fdiffLiION equal c_msdLiION[4]/6/(step*dt+1.0e-6)
+
+compute msdPF6 PF6  msd  com yes
+variable        fdiffPF6 equal c_msdPF6[4]/6/(step*dt+1.0e-6)
+
+compute msdDMSO DMSO  msd com yes
+variable        fdiffDMSO equal c_msdDMSO[4]/6/(step*dt+1.0e-6)
+
+log ResultsElec4.data
+
+thermo_style custom step   c_msdLiION[4]  c_msdPF6[4] c_msdDMSO[4]   v_fdiffLiION  v_fdiffPF6 v_fdiffDMSO  temp press pe etotal
+
+dump            1 all custom 1000 shah.lammpstrj id type x y z vx vy vz fx fy fz element
+dump_modify 1 element O C H H H C O O C H H H O C O O C H H H C H H C H H H C C O C O H H O H H Li P F 
+
+dump            2 Ions custom 1000 ionshah1.lammpstraj id type x y z vx vy vz fx fy fz element
+dump_modify 2 element O C H H H C O O C H H H O C O O C H H H C H H C H H H C C O C O H H O H H Li P F
+
+dump            4 LiION custom 2 v_cation.out id vx vy vz
+
+dump            5 PF6 custom 2 v_anion.out id vx vy vz
+
+dump unwrapped Ions dcd 10000 traj_unwrapped.dcd
+dump_modify unwrapped unwrap yes
+run 5000000
+
+write_data   system2.data

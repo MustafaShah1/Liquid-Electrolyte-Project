@@ -1,0 +1,40 @@
+include         system.in.init
+read_data       system.data 
+include         system.in.settings
+
+
+minimize    1.0e-4 1.0e-6 100 1000
+
+velocity    all create 303.15 87287 loop geom
+
+thermo_style  custom step temp pe etotal vol
+
+thermo        10000 
+    group DMSO type  7
+    group TFSI type  14
+    group LiION type  13
+
+timestep 1
+
+
+fix LG all langevin 800.0 800.0 1000.0 699483
+run 100000
+unfix LG
+
+fix nvt1 all nvt temp  800.0 800.0 100.0 
+run 100000
+unfix nvt1
+ 
+fix 1 all npt temp 800.0 300.0 100.0 iso 500.0 500.0 1000.0
+run 100000
+unfix 1
+
+fix 2 all npt temp 300.0 300.0 100.0 iso 500.0 1.0 1000.0
+run 200000
+unfix 2
+
+fix 3 all npt temp 300.0 300.0 100.0 iso 1.0 1.0 1000.0 
+run 1500000
+
+
+write_data   system.data

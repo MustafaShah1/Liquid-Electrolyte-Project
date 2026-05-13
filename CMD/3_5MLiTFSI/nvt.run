@@ -1,0 +1,51 @@
+include         system.in.init
+read_data       system.data
+
+include         system.in.settings
+replicate  2 2 2
+minimize    1.0e-4 1.0e-6 100 1000
+
+velocity    all create 303.15 87287 loop geom
+
+thermo_style  custom step temp pe etotal vol
+
+thermo        1000 
+    group DMSO type  7
+    group TFSI type  14
+    group LiION type  13
+    group Ions type 14 13
+
+timestep 1
+
+
+fix fxnvt all nvt temp 303.15 303.15 100
+
+compute msdLiION LiION  msd com yes
+variable        fdiffLiION equal c_msdLiION[4]/6/(step*dt+1.0e-6)
+
+compute msdTFSI TFSI  msd  com yes
+variable        fdiffTFSI equal c_msdTFSI[4]/6/(step*dt+1.0e-6)
+
+compute msdDMSO DMSO  msd com yes
+variable        fdiffDMSO equal c_msdDMSO[4]/6/(step*dt+1.0e-6)
+
+log ResultsElec2.data
+
+thermo_style custom step   c_msdLiION[4]  c_msdTFSI[4] c_msdDMSO[4]   v_fdiffLiION  v_fdiffTFSI v_fdiffDMSO  temp press pe etotal
+
+dump            1 all custom 1000 Elec.lammpstrj id type x y z vx vy vz fx fy fz element
+dump_modify 1 element O C H H H C O O C H H H Li N S C F O 
+
+dump            2 Ions custom 1000 Elec1Ions.lammpstraj id type x y z element
+dump_modify 2 every 1000  element H Li C N O F S
+
+
+dump            4 LiION custom 2 v_cation.out id vx vy vz
+
+dump            5 TFSI custom 2 v_anion.out id vx vy vz
+
+dump unwrapped Ions dcd 1000 traj_unwrapped.dcd
+dump_modify unwrapped unwrap yes
+run 5000000
+
+write_data   system2.data
