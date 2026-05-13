@@ -1,0 +1,28 @@
+SYSTEM = E1
+#------------------------------------------------------------------
+PREC   = ACCURATE       
+ENCUT  = 600 eV         
+ISMEAR = 0              
+SIGMA  = 0.1 eV         
+NELM   = 200            
+EDIFF  = 1.0E-4 eV      
+EDIFFG = 1.0E-3  eV
+ISPIN    = 1
+NSW    = 10000            
+IBRION  = 0         
+POTIM   = 0.5      
+ISIF    = 2         
+MDALGO  = 2
+SMASS   = 0        
+TEBEG   = 300      
+TEEND   = 300     
+ISYM    = 0              
+LWAVE    = F            
+LCHARG   = F           
+ALGO     = Fast
+LREAL    = A          
+NELMIN   = 4            
+WEIMIN   = 0            
+
+NPAR     = 16          
+LORBIT = 11    

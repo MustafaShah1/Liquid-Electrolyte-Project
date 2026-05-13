@@ -1,0 +1,45 @@
+units           metal
+boundary        p p p
+atom_style      atomic
+neighbor        1.0 bin
+neigh_modify    every 10 delay 0 check no
+read_data       elec4.lmp
+mass            1 1
+mass            2 7
+mass            3 12
+mass            4 16
+mass            5 19
+mass            6 31
+pair_style      deepmd graph-compress.pb
+pair_coeff      * *
+velocity        all create 300.0 3456789 dist gaussian
+
+minimize    1.0e-4 1.0e-6 1000 10000
+
+fix 1 all npt temp 300.0 300.0 1 iso 1.0 1.0 1.0
+
+run 100000
+
+fix             1 all nvt temp 300.0 300.0 0.1
+timestep        0.001
+thermo_style    custom step pe ke etotal temp press vol
+thermo          1000
+    group PF6 type  6
+    group LiION type 2
+    group ions type 2 6
+compute msdLiION LiION  msd com yes
+variable        fdiffLiION equal c_msdLiION[4]/6/(step*dt+1.0e-6)
+compute msdPF6 PF6  msd  com yes
+variable        fdiffPF6 equal c_msdPF6[4]/6/(step*dt+1.0e-6)
+log elec4.data
+thermo_style custom step   c_msdLiION[4]  c_msdPF6[4]  v_fdiffLiION  v_fdiffPF6  temp press pe etotal
+dump            1 ions custom 1000 Elec4.lammpstraj id type x y z element
+dump_modify 1 element H Li C O F P
+dump            2 all custom 1000 Elec4a.lammpstraj id type x y z vx vy vz fx fy fz element
+dump_modify 2 element H Li C O F P
+
+dump unwrapped Ions dcd 10000 traj_unwrapped.dcd
+dump_modify unwrapped unwrap yes
+
+run             10000000
+write_data   system.data

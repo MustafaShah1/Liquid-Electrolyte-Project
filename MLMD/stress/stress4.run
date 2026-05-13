@@ -1,0 +1,57 @@
+##MHD
+units           metal
+boundary        p p p
+atom_style      atomic
+
+read_data       e4.lmp
+
+mass            1  12    # C
+mass            2  19    # F
+mass            3  1     # H
+mass            4  7     # Li
+mass            5  16    # O
+mass            6  31    # P
+
+pair_style      deepmd graph.pb
+pair_coeff      * *
+
+timestep 0.001
+
+velocity all create 300 12345 mom yes rot no
+
+# Store initial box
+variable Lx0 equal lx
+
+# -------------------------
+# EQUILIBRATION
+# -------------------------
+fix 1 all npt temp 300 300 100.0 iso 0 0 100.0
+run 25000
+unfix 1
+reset_timestep  0
+# -------------------------
+# SHEAR DEFORMATION
+# -------------------------
+fix 1 all nvt temp 300 300 0.1
+
+variable srate equal 1.0e10
+variable srate1 equal "v_srate / 1.0e12"
+
+fix 2 all deform 1 xy erate ${srate1} remap x
+
+# Strain & stress
+variable strain equal "xy/v_Lx0"
+variable p1 equal "v_strain"
+variable p2 equal "-pxx/10000"
+variable p3 equal "-pyy/10000"
+variable p4 equal "-pzz/10000"
+variable p5 equal "-pxy/10000"
+
+fix def1 all print 100 "${p1} ${p2} ${p3} ${p4} ${p5}" file shear.def1.txt screen no
+
+dump dCoords all custom 250 traj.lammpstrj id type x y z ix iy iz
+
+thermo 500
+thermo_style custom step temp v_strain v_p2 v_p3 v_p4 v_p5 press
+
+run 200000

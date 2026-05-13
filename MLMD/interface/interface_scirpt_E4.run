@@ -1,0 +1,35 @@
+units           real
+boundary        p p p
+atom_style      atomic
+neighbor        1.0 bin
+neigh_modify    every 10 delay 0 check no
+read_data       elec4.lmp
+replicate       4 4 1 
+mass            1 12
+mass            2 19
+mass            3 1
+mass            4 7
+mass            5 16
+mass            6 31
+
+pair_style      deepmd graph-compress.pb
+pair_coeff      * *
+velocity        all create 300.0 23456789 dist gaussian
+
+minimize    1.0e-4 1.0e-6 1000 10000
+
+timestep 1
+thermo_style    custom step pe ke etotal temp press vol
+thermo          100
+
+
+
+fix 1 all nvt temp 300.0 300.0 100 
+
+dump            1 all custom 1000 Elec4long.lammpstraj id type x y z vx vy vz fx fy fz element
+dump_modify 1 every 1000  element C F H Li O P
+
+
+
+run 2000000
+write_data   system_after_npt.data
